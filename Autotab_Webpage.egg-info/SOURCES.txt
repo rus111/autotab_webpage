@@ -1,0 +1,11 @@
+MANIFEST.in
+README.md
+requirements.txt
+setup.py
+Autotab_Webpage.egg-info/PKG-INFO
+Autotab_Webpage.egg-info/SOURCES.txt
+Autotab_Webpage.egg-info/dependency_links.txt
+Autotab_Webpage.egg-info/requires.txt
+Autotab_Webpage.egg-info/top_level.txt
+streamlit/__init__.py
+streamlit/autotab-app.py
