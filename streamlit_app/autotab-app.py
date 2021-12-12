@@ -6,6 +6,7 @@ from PIL import Image
 import requests
 from streamlit_app import params
 
+
 st.set_page_config(
     page_title="AutoTab tab generator",
     layout="centered", # centered
@@ -13,13 +14,13 @@ st.set_page_config(
 
 st.write(params.LOCAL_PATH)
 
-base_url = 'http://localhost:8000'
+base_url = 'https://autotab-cloud-image-xsu5gc7nxq-ew.a.run.app'
 
 def resp(endpoint, filename):
     url = base_url +'/'+ endpoint
     
     params = {
-        'filename': filename
+        'uploaded_file': filename
     }
     response = requests.get(url, params=params)
     response = response.json()
@@ -62,19 +63,27 @@ st.write(f'<style>{CSS}</style>', unsafe_allow_html=True)
 
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
+# os.popen('explorer.exe "C:\\Users\\rus\\Downloads"')
 uploaded_file = st.file_uploader("choose a music file:", type="wav")
+# st.write('uploaded file:', uploaded_file)
 
-if uploaded_file is not None:
-    st.write('filename', uploaded_file.name)
-    st.write('current dir', os.getcwd())
-    
-    audio_file = open(uploaded_file.name, 'rb')
-    audio_bytes = audio_file.read()
-    st.audio(audio_bytes, format='audio/wav')
-    
-    gcloud_path = f'gsutil cp {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
-    st.write(gcloud_path)
-    os.popen(gcloud_path)
+@st.cache(suppress_st_warning=True)
+def upload_to_gcloud(uploaded_file):
+    if uploaded_file is not None:
+        st.write('filename', uploaded_file.name)
+        st.write('current dir', os.getcwd())
+        
+        audio_bytes = uploaded_file.read()
+        with open(uploaded_file.name, mode="bx") as f:
+            f.write(audio_bytes)
+        st.audio(audio_bytes, format='audio/wav')
+        
+        gcloud_path = f'gsutil cp -n {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
+        st.write(gcloud_path)
+        os.popen(gcloud_path)
+
+# call the upload to upload_to_gcloud function once
+upload_to_gcloud(uploaded_file)
     
 
 
