@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 import requests
 from streamlit_app import params
+import time
 
 
 st.set_page_config(
@@ -79,6 +80,7 @@ def upload_to_gcloud(uploaded_file):
         st.audio(audio_bytes, format='audio/wav')
         
         gcloud_path = f'gsutil cp -n {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
+        time.sleep(5)
         st.write(gcloud_path)
         os.popen(gcloud_path)
 
