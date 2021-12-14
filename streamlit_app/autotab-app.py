@@ -6,6 +6,7 @@ from PIL import Image
 import requests
 from streamlit_app import params
 from google.cloud import storage
+import sys
 
 
 st.set_page_config(
@@ -23,9 +24,11 @@ def resp(endpoint, filename):
     params = {
         'uploaded_file': filename
     }
+    print(url, params)
     response = requests.get(url, params=params)
+    sys.stdout.write('resonse' +  str(response)+"\n")
     response = response.json()
-    print('resonse', response)
+    sys.stdout.write('resonse' +  str(response)+"\n")
     return response
     # st.text(response['simple_text'])
 
@@ -98,19 +101,20 @@ def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
 
     # The path to which the file should be downloaded
     # destination_file_name = "local/path/to/file"
-
+    
     storage_client = storage.Client()
     print(storage_client)
 
     bucket = storage_client.bucket(bucket_name)
-    print(bucket)
+    # sys.stdout.write(bucket)
+    print("bucket", bucket)
 
     # Construct a client side representation of a blob.
     # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
     # any content from Google Cloud Storage. As we don't need additional data,
     # using `Bucket.blob` is preferred here.
     blob = bucket.blob(source_blob_name)
-    print("blob                                \n", blob)
+    sys.stdout.write("blob"+ str(blob)+"\n")
     file_exists = storage.Blob(bucket=bucket, name=uploaded_file.name).exists(storage_client)
     if not file_exists:
         blob.upload_from_filename(destination_file_name)
@@ -119,16 +123,20 @@ def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
                 destination_file_name, source_blob_name, bucket_name
             )
         )
-
+        print(f'uploaded {destination_file_name}')
+        
+# import ipdb; ipdb.set_trace() # TODO:
 if uploaded_file is not None:
     audio_bytes = uploaded_file.read()
     st.audio(audio_bytes, format='audio/wav')
-    try: 
+    joined_path = os.path.join(params.LOCAL_PATH, uploaded_file.name)
+    print(joined_path)
+    if not os.path.isfile(joined_path): # Only create locally, if it is not there yet.
+        print('file:', uploaded_file, 'in dir', params.LOCAL_PATH, 'does not exists')
         with open(uploaded_file.name, mode="bx") as f:
             f.write(audio_bytes)
-        upload_gcloud_file(params.BUCKET_NAME, uploaded_file.name, uploaded_file.name)
-    except:
-        pass 
+    upload_gcloud_file(params.BUCKET_NAME, uploaded_file.name, uploaded_file.name)
+
     
 
 
