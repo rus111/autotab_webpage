@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import requests
 from streamlit_app import params
-import time
+from google.cloud import storage
 
 
 st.set_page_config(
@@ -68,24 +68,67 @@ st.set_option('deprecation.showfileUploaderEncoding', False)
 uploaded_file = st.file_uploader("choose a music file:", type="wav")
 # st.write('uploaded file:', uploaded_file)
 
-@st.cache(suppress_st_warning=True)
-def upload_to_gcloud(uploaded_file):
-    if uploaded_file is not None:
-        st.write('filename', uploaded_file.name)
-        st.write('current dir', os.getcwd())
+# @st.cache(suppress_st_warning=True)
+# def upload_to_gcloud(uploaded_file):
+#     if uploaded_file is not None:
+#         st.write('filename', uploaded_file.name)
+#         st.write('current dir', os.getcwd())
         
-        audio_bytes = uploaded_file.read()
-        with open(uploaded_file.name, mode="bx") as f:
-            f.write(audio_bytes)
-        st.audio(audio_bytes, format='audio/wav')
+#         audio_bytes = uploaded_file.read()
+#         with open(uploaded_file.name, mode="bx") as f:
+#             f.write(audio_bytes)
+#         st.audio(audio_bytes, format='audio/wav')
         
-        gcloud_path = f'gsutil cp -n {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
-        time.sleep(5)
-        st.write(gcloud_path)
-        os.popen(gcloud_path)
+#         gcloud_path = f'gsutil cp -n {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
+#         time.sleep(5)
+#         st.write(gcloud_path)
+#         os.popen(gcloud_path)
 
 # call the upload to upload_to_gcloud function once
-upload_to_gcloud(uploaded_file)
+# upload_to_gcloud(uploaded_file)
+
+@st.cache(suppress_st_warning=True)
+def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+
+    # The ID of your GCS object
+    # source_blob_name = "storage-object-name"
+
+    # The path to which the file should be downloaded
+    # destination_file_name = "local/path/to/file"
+
+    storage_client = storage.Client()
+    print(storage_client)
+
+    bucket = storage_client.bucket(bucket_name)
+    print(bucket)
+
+    # Construct a client side representation of a blob.
+    # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
+    # any content from Google Cloud Storage. As we don't need additional data,
+    # using `Bucket.blob` is preferred here.
+    blob = bucket.blob(source_blob_name)
+    print("blob                                \n", blob)
+    file_exists = storage.Blob(bucket=bucket, name=uploaded_file.name).exists(storage_client)
+    if not file_exists:
+        blob.upload_from_filename(destination_file_name)
+        print(
+            "Uploaded storage object {} from local file {} to bucket {}.".format(
+                destination_file_name, source_blob_name, bucket_name
+            )
+        )
+
+if uploaded_file is not None:
+    audio_bytes = uploaded_file.read()
+    st.audio(audio_bytes, format='audio/wav')
+    try: 
+        with open(uploaded_file.name, mode="bx") as f:
+            f.write(audio_bytes)
+        upload_gcloud_file(params.BUCKET_NAME, uploaded_file.name, uploaded_file.name)
+    except:
+        pass 
     
 
 
@@ -118,5 +161,7 @@ if uploaded_file is not None and mode == 'All Frames':
 
     simple_text = resp('all_frames', uploaded_file.name)
     st.text(simple_text['simple_text'])
+    
+
 
 
