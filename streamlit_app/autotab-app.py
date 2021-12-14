@@ -87,7 +87,7 @@ uploaded_file = st.file_uploader("choose a music file:", type="wav")
 # call the upload to upload_to_gcloud function once
 # upload_to_gcloud(uploaded_file)
 
-@st.cache(suppress_st_warning=True)
+# @st.cache(suppress_st_warning=True)
 def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
     # The ID of your GCS bucket
