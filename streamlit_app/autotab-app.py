@@ -14,7 +14,6 @@ st.set_page_config(
     layout="centered", # centered
     initial_sidebar_state="auto") # collapsed
 
-st.write(params.LOCAL_PATH)
 
 base_url = 'https://autotab-cloud-image-xsu5gc7nxq-ew.a.run.app'
 
@@ -34,7 +33,7 @@ def resp(endpoint, filename):
 
 
 image_path = "https://images.unsplash.com/photo-1535587566541-97121a128dc5?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80"
-st.write(f'<div class="banner" style="background-image: linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)), url({image_path});"><h1>Autotab</h1><p>Learning the guitar the easy way</p></div>', unsafe_allow_html=True)
+st.write(f'<div class="banner" style="background-image: linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)), url({image_path});"><h1>Autotab</h1><p>Learning to play the guitar the easy way</p></div>', unsafe_allow_html=True)
 CSS = """
 .banner {
     background-position: center;
@@ -125,7 +124,6 @@ def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
         )
         print(f'uploaded {destination_file_name}')
         
-# import ipdb; ipdb.set_trace() # TODO:
 if uploaded_file is not None:
     audio_bytes = uploaded_file.read()
     st.audio(audio_bytes, format='audio/wav')
@@ -169,3 +167,58 @@ if uploaded_file is not None and mode == 'All Frames':
 
     simple_text = resp('all_frames', uploaded_file.name)
     st.text(simple_text['simple_text'])
+    
+#######################################################################
+# The developers:
+
+developers_html =  """<div class="footer">
+<div class="footer-copyright">
+    Autotab is brought to you by:
+</div>
+<img class="avatar-large" alt="avatar-large" src="https://avatars.githubusercontent.com/u/75431042?v=4" />
+<img class="avatar-large" alt="avatar-large" src="https://res.cloudinary.com/wagon/image/upload/c_fill,g_face,h_200,w_200/v1632725013/gu7bxeeyzt4tvxidmxsu.jpg" />
+<img class="avatar-large" alt="avatar-large" src="https://avatars.githubusercontent.com/u/91727688?v=4" />
+<img class="avatar-large" alt="avatar-large" src="https://res.cloudinary.com/wagon/image/upload/c_fill,g_face,h_200,w_200/v1632729260/u7j3wesevs1hwbtfahem.jpg" />
+</div>
+"""
+
+
+developers_css = """
+.footer {
+  position: fixed;
+  bottom:0;
+  background: #F4F4F4;
+  display: bottom;
+  align-items: center;
+  justify-content: space-between;
+  height: 100px;
+  padding: 0px 50px;
+  color: rgba(0,0,0,0.3);
+}
+
+.avatar {
+  width: 40px;
+  border-radius: 50%;
+}
+
+.avatar-large {
+  width: 56px;
+  border-radius: 50%;
+}
+
+.avatar-bordered {
+  width: 40px;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  border: white 1px solid;
+}
+
+.avatar-square {
+  width: 40px;
+  border-radius: 0px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  border: white 1px solid;
+}
+"""
+st.write(developers_html, unsafe_allow_html=True)
+st.write(f'<style>{developers_css}</style>', unsafe_allow_html=True)
