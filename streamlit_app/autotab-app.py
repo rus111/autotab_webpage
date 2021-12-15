@@ -168,7 +168,7 @@ if uploaded_file is not None and mode == 'All Frames':
     """)
 
     simple_text = resp('all_frames', uploaded_file.name)
-    st.text(simple_text['simple_text'])
+    st.text(simple_text['simple_text']) 
     
 
 
