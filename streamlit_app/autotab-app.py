@@ -5,8 +5,8 @@ import numpy as np
 from PIL import Image
 import requests
 from streamlit_app import params
-from google.cloud import storage
 import sys
+import google_cloud as gc
 
 
 st.set_page_config(
@@ -14,7 +14,7 @@ st.set_page_config(
     layout="centered", # centered
     initial_sidebar_state="auto") # collapsed
 
-
+uploaded_file = None
 base_url = 'https://autotab-cloud-image-xsu5gc7nxq-ew.a.run.app'
 
 def resp(endpoint, filename):
@@ -66,108 +66,70 @@ st.write(f'<style>{CSS}</style>', unsafe_allow_html=True)
 
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
-# os.popen('explorer.exe "C:\\Users\\rus\\Downloads"')
-uploaded_file = st.file_uploader("choose a music file:", type="wav")
-# st.write('uploaded file:', uploaded_file)
-
-# @st.cache(suppress_st_warning=True)
-# def upload_to_gcloud(uploaded_file):
-#     if uploaded_file is not None:
-#         st.write('filename', uploaded_file.name)
-#         st.write('current dir', os.getcwd())
-        
-#         audio_bytes = uploaded_file.read()
-#         with open(uploaded_file.name, mode="bx") as f:
-#             f.write(audio_bytes)
-#         st.audio(audio_bytes, format='audio/wav')
-        
-#         gcloud_path = f'gsutil cp -n {params.LOCAL_PATH + uploaded_file.name} gs://{params.BUCKET_NAME}'
-#         time.sleep(5)
-#         st.write(gcloud_path)
-#         os.popen(gcloud_path)
-
-# call the upload to upload_to_gcloud function once
-# upload_to_gcloud(uploaded_file)
-
-# @st.cache(suppress_st_warning=True)
-def upload_gcloud_file(bucket_name, source_blob_name, destination_file_name):
-    """Downloads a blob from the bucket."""
-    # The ID of your GCS bucket
-    # bucket_name = "your-bucket-name"
-
-    # The ID of your GCS object
-    # source_blob_name = "storage-object-name"
-
-    # The path to which the file should be downloaded
-    # destination_file_name = "local/path/to/file"
+# choose an existing music file or your own
+if st.checkbox('check if you want to upload your mono-wave file!'):
+    # upload music file to ram 
+    uploaded_file = st.file_uploader("please choose a (mono) wave music file:", type="wav")
+    filename = ''
+else:
+    # download file from cloud and allow user to play it.  
+    filename = 'experimentmono.wav'
+    st.write('you chose: ' + filename + ' file')
+    joined_path = os.path.join(params.LOCAL_PATH, filename)
+    print(joined_path)
+    if not os.path.isfile(joined_path): # Only create locally, if it is not there yet.
+        print('file:', filename, 'in dir', params.LOCAL_PATH, 'does not exists')
+        gc.get_gcloud_file(params.BUCKET_NAME, filename, filename)
+    audio_file = open(filename,'rb')
+    audio_bytes = audio_file.read() 
+    st.audio(audio_bytes, format='audio/wav')
     
-    storage_client = storage.Client()
-    print(storage_client)
-
-    bucket = storage_client.bucket(bucket_name)
-    # sys.stdout.write(bucket)
-    print("bucket", bucket)
-
-    # Construct a client side representation of a blob.
-    # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
-    # any content from Google Cloud Storage. As we don't need additional data,
-    # using `Bucket.blob` is preferred here.
-    blob = bucket.blob(source_blob_name)
-    sys.stdout.write("blob"+ str(blob)+"\n")
-    file_exists = storage.Blob(bucket=bucket, name=uploaded_file.name).exists(storage_client)
-    if not file_exists:
-        blob.upload_from_filename(destination_file_name)
-        print(
-            "Uploaded storage object {} from local file {} to bucket {}.".format(
-                destination_file_name, source_blob_name, bucket_name
-            )
-        )
-        print(f'uploaded {destination_file_name}')
-        
+# execute if wave file is chosen to write it in file.     
 if uploaded_file is not None:
+    filename = uploaded_file.name
     audio_bytes = uploaded_file.read()
     st.audio(audio_bytes, format='audio/wav')
-    joined_path = os.path.join(params.LOCAL_PATH, uploaded_file.name)
+    joined_path = os.path.join(params.LOCAL_PATH, filename)
     print(joined_path)
     if not os.path.isfile(joined_path): # Only create locally, if it is not there yet.
         print('file:', uploaded_file, 'in dir', params.LOCAL_PATH, 'does not exists')
-        with open(uploaded_file.name, mode="bx") as f:
+        with open(filename, mode="bx") as f:
             f.write(audio_bytes)
-    upload_gcloud_file(params.BUCKET_NAME, uploaded_file.name, uploaded_file.name)
-
-    
+    gc.upload_gcloud_file(params.BUCKET_NAME, filename, filename)
 
 
 mode = st.radio('Choose Mode of Tab production:', ('Ergonomic Simple', 'Ergonomic Rhythm', 'All Frames'))
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
 
-    
-if uploaded_file is not None and mode == 'Ergonomic Simple': 
-    st.title("""
-            Ergonomic Simple predicted Tabs: 
-    """)
+def output_style_request(mode, filename):
+    if filename != '':
+        if mode == 'Ergonomic Simple': 
+            st.title("""
+                    Ergonomic Simple predicted Tabs: 
+            """)
 
-    # response of ergonomic_simple endpoint, also give filename
-    simple_text = resp('ergonomic_simple', uploaded_file.name) 
-    st.text(simple_text['simple_text'])
-    
-if uploaded_file is not None and mode == 'Ergonomic Rhythm': 
-    st.title("""
-            Ergonomic Rhythm predicted Tabs:
-    """)
+            # response of ergonomic_simple endpoint, also give filename
+            simple_text = resp('ergonomic_simple', filename) 
+            st.text(simple_text['simple_text'])
+            
+        if mode == 'Ergonomic Rhythm': 
+            st.title("""
+                    Ergonomic Rhythm predicted Tabs:
+            """)
 
-    simple_text = resp('ergonomic_rhythm', uploaded_file.name)
-    st.text(simple_text['simple_text'])
-    
-if uploaded_file is not None and mode == 'All Frames': 
-    st.title("""
-            All Frames predicted Tabs:
-    """)
+            simple_text = resp('ergonomic_rhythm', filename)
+            st.text(simple_text['simple_text'])
+            
+        if mode == 'All Frames': 
+            st.title("""
+                    All Frames predicted Tabs:
+            """)
 
-    simple_text = resp('all_frames', uploaded_file.name)
-    st.text(simple_text['simple_text'])
-    
+            simple_text = resp('all_frames', filename)
+            st.text(simple_text['simple_text'])
+
+output_style_request(mode, filename) 
 #######################################################################
 # The developers:
 
