@@ -72,8 +72,11 @@ if st.checkbox('check if you want to upload your mono-wave file!'):
     uploaded_file = st.file_uploader("please choose a (mono) wave music file:", type="wav")
     filename = ''
 else:
-    # download file from cloud and allow user to play it.  
-    filename = 'experimentmono.wav'
+    # download file from cloud and allow user to play it.    
+    name_list = gc.list_blobs(params.BUCKET_NAME)
+    # st.write(name_list[0])
+    filename = st.selectbox('Please select a file uploaded by another user!', name_list)
+    
     st.write('you chose: ' + filename + ' file')
     joined_path = os.path.join(params.LOCAL_PATH, filename)
     print(joined_path)
